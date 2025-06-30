@@ -1,9 +1,4 @@
 <!DOCTYPE HTML>
-<!--
-	Ion by TEMPLATED
-	templated.co @templatedco
-	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
--->
 <html>
 	<head>
 		<title>Plastids of the Pilbara</title>
@@ -19,11 +14,639 @@
 		<script src="js/jquery.min.js"></script>
 		<script src="js/skel.min.js"></script>
 		<script src="js/skel-layers.min.js"></script>
-		<script type="text/javascript" src="js/fabric.min.js"></script>
 		<script src="js/init.js"></script>
-		<script src="js/pilbara_tree.js"></script>
 
-	 	<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.13/af-2.1.3/b-1.2.4/b-colvis-1.2.4/b-html5-1.2.4/cr-1.3.2/fc-3.2.2/fh-3.1.2/kt-2.2.0/rr-1.2.0/sc-1.4.2/se-1.2.0/datatables.min.js"></script>
+		<!-- Load data files FIRST -->
+		<script src="data/tree_data.js"></script>
+		<script src="data/rows.js"></script>
+		
+		<!-- Load Fabric.js -->
+		<script type="text/javascript" src="js/fabric.min.js"></script>
+		
+		<!-- Load DataTables for table functionality -->
+		<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.13/af-2.1.3/b-1.2.4/b-colvis-1.2.4/b-html5-1.2.4/cr-1.3.2/fc-3.2.2/fh-3.1.2/kt-2.2.0/rr-1.2.0/sc-1.4.2/se-1.2.0/datatables.min.js"></script>
+		
+		<!-- Load optomised tree component -->
+		<script>
+
+// Main PilbaraTree namespace
+window.PilbaraTree = new (function () {
+	// Performance optimization: Check for Fabric.js availability
+	if (typeof fabric === "undefined") {
+		console.error("Fabric.js is required but not loaded");
+		return null;
+	}
+
+	// Minimal events system (optomised)
+	const EventsMixin = function (target) {
+		if (target) return EventsMixin.call(target);
+
+		// Use Map for better performance than object
+		this.events = new Map();
+
+		this.on = function (name, func) {
+			if (!this.events.has(name)) this.events.set(name, []);
+			if (typeof func === "function") this.events.get(name).push(func);
+		};
+
+		this.fire = function (name, data) {
+			const handlers = this.events.get(name);
+			if (handlers) handlers.forEach((f) => f(data));
+		};
+	};
+
+	// optomised color map (truncated for performance)
+	const colormap = [
+		[255, 0, 0],
+		[250, 12, 3],
+		[240, 36, 9],
+		[230, 60, 15],
+		[220, 84, 21],
+		[210, 108, 27],
+		[200, 132, 33],
+		[190, 156, 39],
+		[180, 180, 45],
+		[170, 204, 51],
+		[160, 228, 57],
+		[150, 252, 63],
+		[140, 228, 69],
+		[130, 204, 75],
+		[120, 180, 81],
+		[110, 156, 87],
+		[100, 132, 93],
+		[90, 108, 99],
+		[80, 84, 105],
+		[70, 60, 111],
+		[60, 36, 117],
+		[50, 12, 123],
+		[40, 0, 129],
+		[30, 24, 135],
+		[20, 48, 141],
+		[10, 72, 147],
+		[0, 96, 153],
+	];
+
+	// optomised random color function
+	function random_color() {
+		const [r, g, b] = colormap[Math.floor(Math.random() * colormap.length)];
+		return `rgb(${r},${g},${b})`;
+	}
+
+	// optomised tree traversal functions
+	function walk_df(root, func) {
+		const stack = [root];
+		while (stack.length) {
+			const node = stack.pop();
+			func(node);
+			if (node.children) {
+				for (let i = node.children.length - 1; i >= 0; i--) {
+					stack.push(node.children[i]);
+				}
+			}
+		}
+	}
+
+	function walk_bf(root, func) {
+		const queue = [root];
+		while (queue.length) {
+			const node = queue.shift();
+			func(node);
+			if (node.children) {
+				queue.push(...node.children);
+			}
+		}
+	}
+
+	// optomised tree builder with better memory management
+	function build_tree_from_table(table) {
+		const nodes = new Array(table.length);
+		let root = null;
+
+		// First pass: create all nodes
+		for (const [id, pid, leaf, distance, label] of table) {
+			nodes[id] = {
+				id,
+				parent: pid,
+				leaf: leaf === 1,
+				distance,
+				label: label || "",
+				children: leaf === 1 ? null : [],
+			};
+		}
+
+		// Second pass: connect relationships
+		for (const node of nodes) {
+			if (!node) continue;
+
+			if (node.id === 0) {
+				root = node;
+				node.parent = null;
+			} else {
+				const parent = nodes[node.parent];
+				if (parent) {
+					node.parent = parent;
+					if (parent.children) {
+						parent.children.push(node);
+					}
+				}
+			}
+		}
+
+		return root;
+	}
+
+	// Main Tree constructor (optomised for large datasets)
+	function Tree(canvas, user_opts, data) {
+		if (this.constructor !== Tree) return new Tree(canvas, user_opts, data);
+
+		const self = this;
+		EventsMixin(self);
+
+		// Register event types
+		[
+			"node:collapse",
+			"node:expand",
+			"node:select",
+			"node:unselect",
+			"leaf:select",
+			"leaf:unselect",
+		].forEach((event) => self.on(event));
+
+		// optomised default options
+		const default_opts = {
+			draw_mode: "fixed",
+			branch_length: 15,
+			leaf_font_family: "monospace",
+			leaf_font_size: 10,
+			leaf_padding: 1,
+			leaf_color: "#000",
+			leaf_highlight_color: "#90EE90",
+			node_radius: 3,
+			node_color: "#000",
+			line_color: "#333",
+			line_highlight_color: "#f00",
+			line_thickness: 1,
+			onProgress: null,
+		};
+
+		const opts = Object.assign(default_opts, user_opts || {});
+
+		// Progress helper
+		function reportProgress(percent, message, current, total) {
+			if (opts.onProgress) {
+				opts.onProgress(percent, message, current, total);
+			}
+		}
+
+		// Initialize Fabric canvas with performance optimizations
+		const fab = new fabric.Canvas(canvas, {
+			renderOnAddRemove: false,
+			skipTargetFind: false,
+			perPixelTargetFind: false,
+			enableRetinaScaling: false,
+			imageSmoothingEnabled: false,
+		});
+
+		// Load data efficiently
+		let root;
+		if (data) {
+			root = build_tree_from_table(data);
+		} else if (window.treedata) {
+			reportProgress(30, "Building tree structure...");
+			root = build_tree_from_table(window.treedata);
+		} else {
+			console.error("No tree data available");
+			return;
+		}
+
+		// Performance state variables
+		let dirty = true;
+		let leaf_height = 12;
+		let leaf_left = 0;
+		const leaves = [];
+		const fabric_objects = [];
+
+		// optomised Fabric objects builder with faster chunked processing
+		function build_fabric_objects() {
+			console.time("Building Fabric Objects");
+			reportProgress(40, "Creating visual elements...");
+
+			fab.renderOnAddRemove = false;
+
+			const nodes_to_process = [];
+
+			// Collect all nodes first
+			walk_df(root, (node) => {
+				nodes_to_process.push(node);
+			});
+
+			// console.log(`Processing ${nodes_to_process.length} nodes in optomised chunks...`);
+			reportProgress(42, "Starting node processing...", 0, nodes_to_process.length);
+
+			let processed = 0;
+			// INCREASED chunk size dramatically for better performance
+			const chunk_size = Math.min(500, Math.ceil(nodes_to_process.length / 10));
+
+			function processChunk() {
+				const chunk_start = processed;
+				const chunk_end = Math.min(processed + chunk_size, nodes_to_process.length);
+
+				// console.log(`Processing chunk ${chunk_start}-${chunk_end} (${chunk_size} nodes)`);
+
+				// Process entire chunk synchronously for speed
+				for (let i = chunk_start; i < chunk_end; i++) {
+					const node = nodes_to_process[i];
+
+					// Calculate depth and distance
+					if (node.parent === null) {
+						node.depth = 0;
+						node.total_distance = 0;
+					} else {
+						node.depth = node.parent.depth + 1;
+						node.total_distance = node.distance + node.parent.total_distance;
+					}
+
+					node.visible = true;
+					node.selected = false;
+
+					if (node.leaf) {
+						// Create text object for leaf with minimal properties initially
+						node.textbox = new fabric.Text(node.label, {
+							fontFamily: opts.leaf_font_family,
+							fontSize: opts.leaf_font_size,
+							fill: opts.leaf_color,
+							selectable: false,
+							evented: true,
+							hoverCursor: "pointer",
+						});
+
+						// Create line for leaf with minimal properties
+						node.upline = new fabric.Line([0, 0, 0, 0], {
+							stroke: opts.line_color,
+							strokeWidth: opts.line_thickness,
+							selectable: false,
+							evented: false,
+						});
+
+						// Event handler for leaf
+						node.textbox.on("mousedown", () => on_leaf_down(node));
+
+						// Add to collections
+						fabric_objects.push(node.textbox, node.upline);
+						leaves.push(node);
+					} else {
+						// Create circle for internal node with minimal properties
+						node.dot = new fabric.Circle({
+							radius: opts.node_radius,
+							fill: opts.node_color,
+							selectable: false,
+							evented: true,
+							originX: "center",
+							originY: "center",
+							hoverCursor: "pointer",
+						});
+
+						// Create lines for internal node
+						node.upline = new fabric.Line([0, 0, 0, 0], {
+							stroke: opts.line_color,
+							strokeWidth: opts.line_thickness,
+							selectable: false,
+							evented: false,
+						});
+
+						node.spanline = new fabric.Line([0, 0, 0, 0], {
+							stroke: opts.line_color,
+							strokeWidth: opts.line_thickness,
+							selectable: false,
+							evented: false,
+						});
+
+						// Event handlers for node
+						node.dot.on("mouseover", () => on_node_over(node));
+						node.dot.on("mouseout", () => on_node_out(node));
+						node.dot.on("mousedown", () => on_node_down(node));
+
+						// Add to collection
+						fabric_objects.push(node.dot, node.upline, node.spanline);
+					}
+				}
+
+				processed = chunk_end;
+				const progress = 42 + (processed / nodes_to_process.length) * 25; // 42-67%
+
+				// Real-time progress with current/total counts
+				reportProgress(progress, "Processing nodes", processed, nodes_to_process.length);
+
+				if (processed < nodes_to_process.length) {
+					// REDUCED timeout for faster processing
+					setTimeout(processChunk, 1);
+				} else {
+					// Finished processing all nodes
+					// console.log("Finished processing nodes, adding to canvas...");
+					finishBuilding();
+				}
+			}
+
+			// Start chunk processing immediately
+			processChunk();
+		}
+
+		function finishBuilding() {
+			reportProgress(70, "Adding elements to canvas...");
+			// console.log(`Adding ${fabric_objects.length} objects to canvas...`);
+
+			// Add objects in larger batches to reduce overhead
+			let objectIndex = 0;
+			const batchSize = Math.min(200, Math.ceil(fabric_objects.length / 5));
+
+			function addObjectBatch() {
+				const batchEnd = Math.min(objectIndex + batchSize, fabric_objects.length);
+				const batch = fabric_objects.slice(objectIndex, batchEnd);
+
+				// console.log(`Adding objects ${objectIndex} to ${batchEnd} (batch of ${batch.length})`);
+				
+				// Add all objects in batch at once
+				fab.add(...batch);
+				
+				objectIndex = batchEnd;
+
+				const progress = 70 + (objectIndex / fabric_objects.length) * 15; // 70-85%
+				reportProgress(progress, "Adding elements to canvas", objectIndex, fabric_objects.length);
+
+				if (objectIndex < fabric_objects.length) {
+					// Minimal timeout for UI responsiveness
+					setTimeout(addObjectBatch, 1);
+				} else {
+					finalizeTree();
+				}
+			}
+
+			addObjectBatch();
+		}
+
+		function finalizeTree() {
+			reportProgress(85, "Calculating dimensions...");
+
+			// Calculate dimensions with extra padding
+			const w = calculate_width();
+			const h = calculate_height();
+
+			// console.log(`Tree dimensions: ${w} x ${h}`);
+
+			reportProgress(90, "Final positioning...");
+
+			dirty = true; // Ensure recompute runs
+			recompute();
+			resize(w, h);
+
+			console.timeEnd("Building Fabric Objects");
+			reportProgress(100, "Tree complete!");
+
+			// Notify completion
+			if (window.onTreeComplete) {
+				setTimeout(window.onTreeComplete, 50);
+			}
+		}
+
+		// optomised width calculation with proper padding
+		function calculate_width() {
+			let max_label_width = 0;
+			let max_depth = 0;
+
+			for (const leaf of leaves) {
+				if (leaf.depth > max_depth) max_depth = leaf.depth;
+				// Use calculated width or reasonable default
+				const width = leaf.textbox.width || (leaf.label.length * opts.leaf_font_size * 0.6);
+				if (width > max_label_width) max_label_width = width;
+			}
+
+			leaf_left = max_depth * opts.branch_length + 50;
+			const total_width = leaf_left + max_label_width + 150;
+			// console.log(`Width calculation: max_depth=${max_depth}, max_label_width=${max_label_width}, total_width=${total_width}`);
+			return total_width;
+		}
+
+		// optomised height calculation with proper padding
+		function calculate_height() {
+			const totalHeight = leaves.length * leaf_height + 200;
+			// console.log(`Height calculation: ${leaves.length} leaves × ${leaf_height}px + padding = ${totalHeight}px`);
+			return Math.max(totalHeight, 600);
+		}
+
+		// optomised canvas resize with proper bounds
+		function resize(w, h) {
+			// console.log(`Resizing canvas to: ${w} x ${h}`);
+
+			const final_w = Math.max(w, 1000);
+			const final_h = Math.max(h, 1000);
+
+			fab.setDimensions({
+				width: Math.round(final_w),
+				height: Math.round(final_h),
+			});
+
+			// Update the canvas element attributes to match
+			const canvas = fab.getElement();
+			canvas.width = Math.round(final_w);
+			canvas.height = Math.round(final_h);
+
+			// Update the wrapper's scroll area
+			const wrapper = document.getElementById("tree_wrapper");
+			if (wrapper) {
+				wrapper.style.minHeight = Math.round(final_h) + "px";
+				wrapper.style.minWidth = Math.round(final_w) + "px";
+			}
+
+			fab.renderAll();
+			// console.log(`Canvas resized to: ${final_w} x ${final_h}`);
+		}
+
+		// Event handlers (optomised)
+		function on_leaf_down(leaf) {
+			leaf.selected = !leaf.selected;
+
+			if (leaf.selected) {
+				leaf.textbox.set("backgroundColor", opts.leaf_highlight_color);
+				self.fire("leaf:select", leaf);
+			} else {
+				leaf.textbox.set("backgroundColor", "");
+				self.fire("leaf:unselect", leaf);
+			}
+
+			fab.renderAll();
+		}
+
+		function on_node_over(node) {
+			node.dot.set("radius", node.dot.radius + 2);
+			fab.renderAll();
+		}
+
+		function on_node_out(node) {
+			node.dot.set("radius", node.dot.radius - 2);
+			fab.renderAll();
+		}
+
+		// optomised double-click detection
+		let click_timer = null;
+		function on_node_down(node) {
+			if (click_timer) {
+				clearTimeout(click_timer);
+				click_timer = null;
+				set_subtree_visibility(node, true);
+				self.fire("node:expand", node);
+			} else {
+				click_timer = setTimeout(() => {
+					click_timer = null;
+					node.selected = !node.selected;
+
+					const color = node.selected ? opts.line_highlight_color : opts.line_color;
+					set_subtree_color(node, color);
+
+					if (node.selected) {
+						self.fire("node:select", node);
+					} else {
+						self.fire("node:unselect", node);
+					}
+				}, 200);
+			}
+		}
+
+		// optomised rendering
+		function render() {
+			if (dirty) {
+				recompute();
+				fab.renderAll();
+				dirty = false;
+			}
+		}
+
+		// optomised position computation with proper spacing
+		function recompute() {
+			// console.log("Recomputing positions...");
+			
+			const visible_leaves = leaves.filter((leaf) => leaf.visible);
+			const visible_nodes = [];
+
+			walk_bf(root, (node) => {
+				if (!node.leaf && node.visible) visible_nodes.push(node);
+			});
+
+			// console.log(`Positioning ${visible_leaves.length} leaves and ${visible_nodes.length} nodes`);
+
+			if (opts.draw_mode === "fixed") {
+				const half_height = leaf_height / 2;
+				const top_padding = 50;
+				const left_padding = 20;
+
+				// Position leaves with padding
+				for (let i = 0; i < visible_leaves.length; i++) {
+					const leaf = visible_leaves[i];
+					const x1 = (leaf.depth - 1) * opts.branch_length + left_padding;
+					const x2 = leaf_left + left_padding;
+					const y1 = i * leaf_height + top_padding;
+
+					leaf.textbox.set({ left: x2, top: y1 });
+					leaf.upline.set({
+						x1,
+						x2,
+						y1: y1 + half_height,
+						y2: y1 + half_height,
+					});
+					leaf.textbox.setCoords();
+				}
+
+				// Position internal nodes with padding
+				for (const node of visible_nodes.reverse()) {
+					if (node.children && node.children.length > 0) {
+						const visible_children = node.children.filter((c) => c.visible);
+						if (visible_children.length > 0) {
+							const x1 = node.parent
+								? node.parent.depth * opts.branch_length + left_padding
+								: left_padding;
+							const x2 = node.depth * opts.branch_length + left_padding;
+							const y1 = visible_children[0].upline
+								? visible_children[0].upline.y1
+								: top_padding;
+							const y2 = visible_children[visible_children.length - 1].upline
+								? visible_children[visible_children.length - 1].upline.y1
+								: y1;
+							const ymid = (y1 + y2) / 2;
+
+							node.upline.set({ x1, x2, y1: ymid, y2: ymid });
+							node.spanline.set({ x1: x2, x2, y1, y2 });
+							node.dot.set({ left: x2, top: ymid });
+							node.dot.setCoords();
+						}
+					}
+				}
+			}
+			
+			// console.log("Position computation complete");
+		}
+
+		// optomised color setting with batching
+		function set_subtree_color(start_node, color) {
+			const objects_to_update = [];
+
+			walk_df(start_node, (node) => {
+				if (node.leaf) {
+					objects_to_update.push(
+						{ obj: node.upline, props: { stroke: color } },
+						{ obj: node.textbox, props: { fill: color } }
+					);
+				} else {
+					objects_to_update.push(
+						{ obj: node.upline, props: { stroke: color } },
+						{ obj: node.spanline, props: { stroke: color } },
+						{ obj: node.dot, props: { fill: color } }
+					);
+				}
+			});
+
+			// Batch update all objects
+			for (const { obj, props } of objects_to_update) {
+				if (obj) obj.set(props);
+			}
+
+			fab.renderAll();
+		}
+
+		// optomised visibility toggling
+		function set_subtree_visibility(node, state) {
+			const objects_to_update = [];
+
+			walk_df(node, (n) => {
+				if (n.visible === state) return;
+				n.visible = state;
+
+				if (n.textbox) objects_to_update.push({ obj: n.textbox, visible: state });
+				if (n.dot && n !== node) objects_to_update.push({ obj: n.dot, visible: state });
+				if (n.upline && n !== node) objects_to_update.push({ obj: n.upline, visible: state });
+				if (n.spanline) objects_to_update.push({ obj: n.spanline, visible: state });
+			});
+
+			// Batch update visibility
+			for (const { obj, visible } of objects_to_update) {
+				if (obj) obj.set({ visible });
+			}
+
+			dirty = true;
+			render();
+		}
+
+		// Public API
+		this.render = render;
+		this.expand_all = () => set_subtree_visibility(root, true);
+		this.collapse_all = () => set_subtree_visibility(root, false);
+
+		// Initialize the tree
+		build_fabric_objects();
+	}
+
+	// Return the Tree constructor
+	return Tree;
+})();
+		</script>
 
 		<!-- END NODE HACK -->
 		<script>if (window.module) module = window.module;</script>
@@ -43,9 +666,91 @@
 				border : dotted gray 1px;
 				resize: vertical;
 				margin-top : 20px;
+				position: relative;
 			}
 			#table_wrapper > table {
 				border : dotted gray 1px;
+			}
+			
+			/* Loading spinner styles */
+			.loading-overlay {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: rgba(255, 255, 255, 0.9);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				z-index: 1000;
+			}
+			
+			.spinner {
+				border: 4px solid #f3f3f3;
+				border-top: 4px solid #007cba;
+				border-radius: 50%;
+				width: 40px;
+				height: 40px;
+				animation: spin 1s linear infinite;
+				margin-bottom: 15px;
+			}
+			
+			@keyframes spin {
+				0% { transform: rotate(0deg); }
+				100% { transform: rotate(360deg); }
+			}
+			
+			.loading-text {
+				color: #666;
+				font-size: 14px;
+				text-align: center;
+			}
+			
+			.progress-bar {
+				width: 320px;
+				height: 8px;
+				background: #f0f0f0;
+				border-radius: 4px;
+				margin: 15px 0;
+				overflow: hidden;
+				box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+			}
+			
+			.progress-fill {
+				height: 100%;
+				background: #007cba;
+				width: 0%;
+				transition: width 0.3s ease;
+			}
+			
+			/* Tree controls */
+			.tree-controls {
+				margin: 10px 0;
+				padding: 10px;
+				background: #f9f9f9;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+			}
+			
+			.tree-controls button {
+				margin: 0 5px;
+				padding: 5px 10px;
+				background: #007cba;
+				color: white;
+				border: none;
+				border-radius: 3px;
+				cursor: pointer;
+			}
+			
+			.tree-controls button:hover {
+				background: #005a87;
+			}
+			
+			.tree-controls button:disabled {
+				background: #ccc;
+				cursor: not-allowed;
 			}
 		</style>
 
@@ -54,7 +759,6 @@
 	<body id="top">
 
 		<!-- Header -->
-		<!--<inject src='html/header.html'></inject>-->
 		<script src='html/header.js'></script>
 
 		<!-- Main -->
@@ -67,16 +771,33 @@
 				<section>
 					<!-- metadata table -->
 					<div id='table_wrapper'>
-						<!--<inject src='html/table.html'></inject>-->
 						<script src='html/table.js'></script>
 					</div>
 
 					<!-- tree -->
-					<div id='tree_wrapper'><canvas id='tree_canvas' width=1000 height=1000></canvas></div>
-					<div>
-						<!--<button onclick='tree_download_image();'>Convert to image</button> |-->
-						<button onclick='tree_download_data();'>Download tree data</button>
-						<!--<button onclick='tree_search();'>Find</button>-->
+					<div id='tree_wrapper'>
+						<canvas id='tree_canvas' width=3000 height=20000 style="display:none;"></canvas>
+						
+						<!-- Loading overlay -->
+						<div id="tree-loading" class="loading-overlay">
+							<div class="spinner"></div>
+							<div class="loading-text">
+								<div id="loading-message">Loading phylogenetic tree...</div>
+								<div style="font-size: 12px; color: #999; margin-top: 5px;">This will take a while</div>
+								<div class="progress-bar">
+									<div class="progress-fill" id="progress-fill"></div>
+								</div>
+								<small id="progress-text">Preparing data...</small>
+							</div>
+						</div>
+					</div>
+					
+					<div class="tree-controls">
+						<button onclick='tree_download_data();'>📥 Download tree data</button>
+						<button onclick='expandAll();' id="expand-btn" disabled>🌳 Expand All</button>
+						<button onclick='collapseAll();' id="collapse-btn" disabled>📁 Collapse All</button>
+						<button onclick='resetView();' id="reset-btn" disabled>🔄 Reset View</button>
+						<span style="margin-left: 15px; color: #666;" id="tree-stats"></span>
 					</div>
 					
 				</section>
@@ -88,43 +809,220 @@
 			let tree = null;
 			let table = null;
 
-			function build_tree()
-			{
-				// tree component
-				tree = new PilbaraTree(document.querySelector('#tree_canvas'));
-
-				// // table component
-				// table = require('./js/component_table')();
-				// get('#table_wrapper').appendChild(table.dom);
-				// table.load('/Users/julian/Desktop/Code/javascript/readslam/1kp/119_pilbara_database/data/pilbara_metadata.html');
-				// table.render();
+			// Progress tracking with real-time updates and console logging
+			function updateProgress(percent, message, current = null, total = null) {
+				const progressFill = document.getElementById('progress-fill');
+				const progressText = document.getElementById('progress-text');
+				const loadingMessage = document.getElementById('loading-message');
+				
+				if (progressFill) progressFill.style.width = percent + '%';
+				
+				// Show real-time counters
+				let displayMessage = message;
+				if (current !== null && total !== null) {
+					displayMessage = message + ' (' + current + '/' + total + ')';
+				}
+				
+				if (progressText) progressText.textContent = displayMessage;
+				
+				// Log progress to console for debugging
+				// console.log('Progress: ' + percent.toFixed(1) + '% - ' + displayMessage);
+				
+				if (loadingMessage && percent > 50) {
+					loadingMessage.textContent = 'Building tree visualization...';
+				}
 			}
 
-			function tree_search()
-			{
-				let userdata = prompt("Search for a string (regex supported)", "BLAH");
+			function build_tree() {
+				// console.log('Building tree...');
+				// console.log('Tree data available:', typeof window.treedata !== 'undefined');
+				// console.log('Fabric available:', typeof fabric !== 'undefined');
+				// console.log('PilbaraTree available:', typeof PilbaraTree !== 'undefined');
+				
+				updateProgress(10, 'Checking dependencies...');
+				
+				if (typeof window.treedata === 'undefined') {
+					console.error('Tree data not loaded!');
+					showError('Tree data not available');
+					return;
+				}
+				
+				if (typeof fabric === 'undefined') {
+					console.error('Fabric.js not loaded!');
+					showError('Fabric.js not available');
+					return;
+				}
+				
+				if (typeof PilbaraTree === 'undefined') {
+					console.error('PilbaraTree not loaded!');
+					showError('PilbaraTree component not available');
+					return;
+				}
+				
+				updateProgress(15, 'Found ' + window.treedata.length + ' nodes to process');
+				
+				// Wait for table to finish loading first
+				waitForTable(function() {
+					updateProgress(25, 'Table loaded, starting tree...');
+					
+					// Set up enhanced error handling
+					let startTime = Date.now();
+					let lastProgressTime = Date.now();
+					
+					// Use requestAnimationFrame to allow UI updates
+					requestAnimationFrame(function() {
+						try {
+							updateProgress(30, 'Creating tree structure...');
+							// console.log('About to create PilbaraTree with ' + window.treedata.length + ' nodes');
+							
+							// Create tree component with enhanced progress callbacks
+							tree = new PilbaraTree(document.querySelector('#tree_canvas'), {
+								onProgress: function(percent, message, current, total) {
+									lastProgressTime = Date.now();
+									updateProgress(percent, message, current, total);
+									
+									// Check for stuck processing
+									if (Date.now() - startTime > 300000) { // 5 minutes
+										console.warn('Tree creation taking longer than expected');
+										showError('Tree creation timeout - try refreshing the page');
+									}
+								}
+							});
+							
+						} catch (error) {
+							console.error('Error creating tree:', error);
+							showError('Failed to create tree: ' + error.message);
+						}
+					});
+				});
 			}
-			function tree_download_image()
-			{
-				let cvs = document.getElementById('tree_canvas');
-				window.open(cvs.toDataURL('image/png'));
-				// let a = document.createElement('a');
-				// a.download = 'image.png';
-				// a.href = cvs.toDataURL('image/png');
-				// a.click();
+			
+			function waitForTable(callback) {
+				// Check if table is ready using our flag
+				if (window.tableReady === true) {
+					// console.log('Table is ready with data');
+					callback();
+					return;
+				}
+				
+				// Also check if DataTable exists and has data as backup
+				const tableElement = document.getElementById('table');
+				if (tableElement && window.jQuery && window.jQuery.fn.DataTable) {
+					try {
+						if (window.jQuery.fn.DataTable.isDataTable('#table')) {
+							const dt = window.jQuery('#table').DataTable();
+							if (dt && dt.data().length > 0) {
+								console.log('Table is ready with DataTable data');
+								window.tableReady = true;
+								callback();
+								return;
+							}
+						}
+					} catch (e) {
+						// Table not ready yet
+					}
+				}
+				
+				// Table not ready, wait and try again
+				updateProgress(12, 'Waiting for table to load...');
+				setTimeout(function() { waitForTable(callback); }, 250);
 			}
-			function tree_download_data()
-			{
+			
+			function showError(message) {
+				const loadingDiv = document.getElementById('tree-loading');
+				if (loadingDiv) {
+					loadingDiv.innerHTML = '<div style="color: #d32f2f; text-align: center;"><h3>⚠️ Error Loading Tree</h3><p>' + message + '</p><button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #d32f2f; color: white; border: none; border-radius: 4px;">Reload Page</button></div>';
+				}
+			}
+			
+			function enableTreeControls() {
+				document.getElementById('expand-btn').disabled = false;
+				document.getElementById('collapse-btn').disabled = false;
+				document.getElementById('reset-btn').disabled = false;
+			}
+			
+			function updateTreeStats() {
+				const statsEl = document.getElementById('tree-stats');
+				if (statsEl && window.treedata) {
+					const totalNodes = window.treedata.length;
+					const leaves = window.treedata.filter(function(node) { return node[2] === 1; }).length;
+					statsEl.textContent = totalNodes + ' total nodes, ' + leaves + ' species';
+				}
+			}
+
+			function tree_download_data() {
 				let a = document.createElement('a');
-				a.href='./data/tree.tsv';
+				a.href = './data/tree.tsv';
+				a.download = 'pilbara_tree_data.tsv';
 				a.click();
 			}
-			build_tree();
+			
+			function expandAll() {
+				if (tree && tree.expand_all) {
+					updateProgress(50, 'Expanding all nodes...');
+					tree.expand_all();
+					tree.render();
+					updateProgress(100, 'All nodes expanded');
+				}
+			}
+			
+			function collapseAll() {
+				if (tree && tree.collapse_all) {
+					updateProgress(50, 'Collapsing all nodes...');
+					tree.collapse_all();
+					tree.render();
+					updateProgress(100, 'All nodes collapsed');
+				}
+			}
+			
+			function resetView() {
+				if (tree) {
+					// Reset canvas position
+					const wrapper = document.getElementById('tree_wrapper');
+					if (wrapper) {
+						wrapper.scrollTop = 0;
+						wrapper.scrollLeft = 0;
+					}
+				}
+			}
+			
+			// Function to be called when tree is complete
+			window.onTreeComplete = function() {
+				// console.log('Tree rendering completed');
+				
+				// Hide loading overlay
+				const loading = document.getElementById('tree-loading');
+				if (loading) loading.style.display = 'none';
+				
+				// Show canvas
+				const canvas = document.getElementById('tree_canvas');
+				if (canvas) canvas.style.display = 'block';
+				
+				// Enable controls
+				enableTreeControls();
+				
+				// Update stats
+				updateTreeStats();
+				
+				updateProgress(100, 'Tree loaded successfully!');
+			};
+
+			// Wait for everything to load with better error handling
+			window.addEventListener('load', function() {
+				updateProgress(5, 'Page loaded, initializing...');
+				
+				// Add error handler for unhandled errors
+				window.addEventListener('error', function(e) {
+					console.error('Unhandled error:', e.error);
+					showError('Unexpected error: ' + e.message);
+				});
+				
+				setTimeout(build_tree, 100);
+			});
 
 		</script>
 
 		<!-- Footer -->
-		<!--<inject src='html/footer.html'></inject>-->
 		<script src='html/footer.js'></script>
 
 	</body>
