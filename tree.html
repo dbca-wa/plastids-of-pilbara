@@ -1,0 +1,284 @@
+<!DOCTYPE HTML>
+<!--
+	Ion by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+
+	Images:
+
+	<a href="https://www.flickr.com/photos/88572252@N06/19848638149">“View S of Karijini NP on road from Auski to Wittenoom, Western Australia”</a> by <i><a href="https://www.flickr.com/people/88572252@N06/">aussiejeff</a></i> is licensed under <a href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a>
+
+	<a href="https://www.flickr.com/photos/stephanridgway/14054879750">“Karijini National Park”</a> by <i><a href="https://www.flickr.com/people/stephanridgway/">Stephan Ridgway</a></i> is licensed under <a href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a>
+
+	<a href="https://www.flickr.com/photos/graeme/10628004123">“View of the Hamersley Ranges”</a> by <i><a href="https://www.flickr.com/people/graeme/">Graeme Churchard</a></i> is licensed under <a href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a>
+
+-->
+<html>
+	<head>
+		<title>Plastids of the Pilbara</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<link rel="icon" type="image/gif" href="images/favicon.gif" />
+
+		<!-- START NODE HACK -->
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+		<!--[if lte IE 8]><script src="js/html5shiv.js"></script><![endif]-->
+		<script src="js/jquery.min.js"></script>
+		<script src="js/skel.min.js"></script>
+		<script src="js/skel-layers.min.js"></script>
+		<script src="js/init.js"></script>
+
+		<!-- END NODE HACK -->
+		<script>if (window.module) module = window.module;</script>
+
+		<noscript>
+			<link rel="stylesheet" href="css/skel.css" />
+			<link rel="stylesheet" href="css/style.css" />
+			<link rel="stylesheet" href="css/style-xlarge.css" />
+		</noscript>
+
+		<script type='text/javascript'>
+			let tree = null;
+			let tree_wrapper = null;
+
+			function node_init() {
+				// tree component
+				tree = require('./component_tree_canvas')({
+					node_radius : 3
+				});
+				tree_wrapper = document.getElementById('app_wrapper_tree');
+				tree_wrapper.appendChild(tree.dom);
+				tree.load('./pilbara.newick');
+				tree.render();
+
+				// TODO: listen for resize events on the container element
+			}
+
+			// execute flat animation frames as fast as possible over a given duration (milliseconds)
+			function animate_pct(duration, frame_function, end_function=()=>{})
+			{
+				console.assert(Number.isInteger(duration) && duration > 0);
+
+				let start_time = null;
+
+				function process_frame(current_time)
+				{
+					if (!start_time) start_time = current_time;
+					let elapsed_time = current_time - start_time;
+					let progress_pct = elapsed_time / duration;
+					if (progress_pct > 1) progress_pct = 1;
+					frame_function(progress_pct);
+					if (progress_pct < 1) window.requestAnimationFrame(process_frame);
+					else end_function(1);
+				}
+				window.requestAnimationFrame(process_frame);
+			}
+
+			// as above but return values between A and B instead of between 0 and 1
+			function animate_val(start_value, end_value, duration, frame_function, end_function=()=>{})
+			{
+				let range = end_value - start_value;
+
+				animate_pct(duration, progress_pct => {
+					frame_function(start_value + Math.round(progress_pct * range));
+				}, end_function);
+			}
+
+			// animate the rotation of an object
+			function animate_rotation(element, start=0, end=180, origin='50% 50%', duration=1000, end_function=()=>{})
+			{
+				animate_val(start, end, duration, value => {
+					element.style.transform = `rotate(${value}deg)`;
+					element.style.transformOrigin = origin;
+				}, end_function);
+			}
+
+			// animate a particular style attribute
+			function animate_style(element, name, start, end, duration, end_function=()=>{})
+			{
+				animate_val(start, end, duration, value => {
+					element.style[name] = value + 'px';
+				}, end_function);
+			}
+
+			function rotate_horizontal()
+			{
+				animate_rotation(tree_wrapper, 0, 90, 'top left', 200);
+				//animate_style(tree_wrapper, 'top', 0, 0, 200);
+				animate_style(tree_wrapper, 'left', 0, 1000, 200);
+				animate_style(tree_wrapper, 'height', 600, 1000, 200);
+			}
+
+			function rotate_vertical()
+			{
+				animate_rotation(tree_wrapper, 90, 0, 'top left', 200);
+				//animate_style(tree_wrapper, 'top', 0, 0, 200);
+				animate_style(tree_wrapper, 'left', 1000, 0, 200);
+				animate_style(tree_wrapper, 'height', 1000, 600, 200);
+			}
+
+			function expand_all()
+			{
+				tree.expand_all();
+				tree.render();
+			}
+		</script>
+
+	</head>
+	<body id="top" onload='node_init()';>
+
+		<!-- Header -->
+		<header id="header" class="skel-layers-fixed">
+			<h1><a href="index.html"><i class="fa fa-home fa-lg"></i> HOME</a></h1>
+			<nav id="nav">
+				<ul>
+					<!--<li><a href="index.html"><i class="fa fa-home fa-lg"></i> Home</a></li>-->
+					<li><a href="sequence_search.html"><i class="fa fa-search fa-lg"></i> Sequence Search</a></li>
+					<li><a href="data_explorer.html"><i class="fa fa-database fa-lg"></i> Data Explorer</a></li>
+					<li><a href="learn_more.html"><i class="fa fa-info-circle fa-lg"></i> Learn More</a></li>
+					<!--<li><a href="#" class="button special">Sign Up</a></li>-->
+				</ul>
+			</nav>
+		</header>
+
+		<style>
+			#app {
+				display : flex;
+				flex-direction : row;
+				flex-wrap : nowrap;
+				justify-content : center;
+				align-items : flex-start;
+			}
+			#app_wrapper_tree {
+				position: absolute;
+				width : 500px;
+				height : 600px;
+				left : 0px;
+				top : 10px;
+				overflow : scroll;
+				border : solid black 1px;
+				resize:both;
+				transform-origin: right bottom;
+			}
+			#controls {
+				position: relative;
+				left : 0px;
+				top : 0px;	
+			}
+		</style>
+
+		<div id='controls'>
+			<button onclick='rotate_vertical();'>vertical</button>
+			<button onclick='rotate_horizontal();'>horizontal</button>
+			<button onclick='expand_all();'>expand all</button>
+		</div>
+		<div id='app' style='position:relative;'>
+			<div id='app_wrapper_tree'></div>
+		</div>
+
+
+		<!-- Header -->
+		<header id="header" class="skel-layers-fixed">
+			<h1><a href="index.html"><i class="fa fa-home fa-lg"></i> HOME</a></h1>
+			<nav id="nav">
+				<ul>
+					<!--<li><a href="index.html"><i class="fa fa-home fa-lg"></i> Home</a></li>-->
+					<li><a href="sequence_search.html"><i class="fa fa-search fa-lg"></i> Sequence Search</a></li>
+					<li><a href="data_explorer.html"><i class="fa fa-database fa-lg"></i> Data Explorer</a></li>
+					<li><a href="learn_more.html"><i class="fa fa-info-circle fa-lg"></i> Learn More</a></li>
+					<!--<li><a href="#" class="button special">Sign Up</a></li>-->
+				</ul>
+			</nav>
+		</header>
+
+		<!-- Main -->
+		<section id="main" class="wrapper style1">
+			<header class="major">
+				<h2>Data Explorer</h2>
+				<p>Examine sequence similarity and access raw data &amp; metadata</p>
+			</header>
+			<div class="container">
+				<div class="row">
+					<div class="4u">
+						<section>
+							<h3>Tree Viewer</h3>
+							<p>Collapse / expand nodes. Select leaves to scroll the table.</p>
+							<ul class="actions">
+								<li><a href="#" class="button alt">Learn More</a></li>
+							</ul>
+						</section>
+						<hr />
+						<section id='component_tree'>
+						</section>
+					</div>
+					<div class="8u skel-cell-important">
+						<section>
+							<h2>Table Viewer</h2>
+							<p>Select rows to update the tree and access metadata / data</p>
+							<ul class="actions">
+								<li><a href="#" class="button alt">Learn More</a></li>
+							</ul>
+						</section>
+						<section id='component_table'>
+							table
+						</section>
+					</div>
+				</div>
+				<hr class="major" />
+				<div class="row">
+					other content
+				</div>
+			</div>
+		</section>
+
+		<footer id="footer">
+			<div class="container">
+				<div class="row double">
+					<div class="6u">
+						<div class="row collapse-at-2">
+							<div class="6u">
+								<h3>Contributors:</h3>
+								<ul class="alt">
+									<li><a href="#">ARC CoE in Plant Energy Biology</a></li>
+									<li><a href="#">Departments of Parks and Wildlife</a></li>
+									<li><a href="#">Kings Park Herbarium</a></li>
+									<li><a href="#">Curtin University</a></li>
+								</ul>
+							</div>
+							<div class="6u">
+								<h3>Contacts:</h3>
+								<ul class="alt">
+									<li><a href="#">person@address.com</a></li>
+									<li><a href="#">person@address.com</a></li>
+									<li><a href="#">person@address.com</a></li>
+									<li><a href="#">person@address.com</a></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+					<div class="6u">
+						<h2>Social Media</h2>
+						<p>Follow us on social media:</p>
+						<ul class="icons">
+							<li><a href="#" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+							<li><a href="#" class="icon fa-facebook"><span class="label">Facebook</span></a></li>
+							<li><a href="#" class="icon fa-instagram"><span class="label">Instagram</span></a></li>
+							<li><a href="#" class="icon fa-linkedin"><span class="label">LinkedIn</span></a></li>
+							<li><a href="#" class="icon fa-pinterest"><span class="label">Pinterest</span></a></li>
+						</ul>
+					</div>
+				</div>
+				<ul class="copyright">
+					<li>&copy; (2017) Julian Tonti-Filippini. All rights reserved.</li>
+					<li>Design: <a href="http://templated.co">ION by TEMPLATED</a></li>
+					<li>Image: <a href="https://www.flickr.com/photos/graeme/10628004123">View of the Hamersley Ranges</a> by <i><a href="https://www.flickr.com/people/graeme/">Graeme Churchard</a></i>, licensed under <a href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a>
+					</li>
+				</ul>
+			</div>
+		</footer>
+
+</body>
+
+</html>

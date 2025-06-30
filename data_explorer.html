@@ -1,0 +1,131 @@
+<!DOCTYPE HTML>
+<!--
+	Ion by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+-->
+<html>
+	<head>
+		<title>Plastids of the Pilbara</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<link rel="icon" type="image/gif" href="images/favicon.gif" />
+
+		<!-- START NODE HACK -->
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+		<!--[if lte IE 8]><script src="js/html5shiv.js"></script><![endif]-->
+		<script src="js/jquery.min.js"></script>
+		<script src="js/skel.min.js"></script>
+		<script src="js/skel-layers.min.js"></script>
+		<script type="text/javascript" src="js/fabric.min.js"></script>
+		<script src="js/init.js"></script>
+		<script src="js/pilbara_tree.js"></script>
+
+	 	<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.13/af-2.1.3/b-1.2.4/b-colvis-1.2.4/b-html5-1.2.4/cr-1.3.2/fc-3.2.2/fh-3.1.2/kt-2.2.0/rr-1.2.0/sc-1.4.2/se-1.2.0/datatables.min.js"></script>
+
+		<!-- END NODE HACK -->
+		<script>if (window.module) module = window.module;</script>
+
+		<noscript>
+			<link rel="stylesheet" href="css/skel.css" />
+			<link rel="stylesheet" href="css/style.css" />
+			<link rel="stylesheet" href="css/style-xlarge.css" />
+		</noscript>
+
+		<script src='js/linker.js'></script>
+
+		<style>
+			#tree_wrapper {
+				height : 600px;
+				overflow : scroll;
+				border : dotted gray 1px;
+				resize: vertical;
+				margin-top : 20px;
+			}
+			#table_wrapper > table {
+				border : dotted gray 1px;
+			}
+		</style>
+
+	</head>
+
+	<body id="top">
+
+		<!-- Header -->
+		<!--<inject src='html/header.html'></inject>-->
+		<script src='html/header.js'></script>
+
+		<!-- Main -->
+		<section id="main" class="wrapper style1">
+			<header class="major">
+				<h2>Data Explorer</h2>
+				<p>Examine sequence similarity and access raw data &amp; metadata</p>
+			</header>
+			<div class="container">
+				<section>
+					<!-- metadata table -->
+					<div id='table_wrapper'>
+						<!--<inject src='html/table.html'></inject>-->
+						<script src='html/table.js'></script>
+					</div>
+
+					<!-- tree -->
+					<div id='tree_wrapper'><canvas id='tree_canvas' width=1000 height=1000></canvas></div>
+					<div>
+						<!--<button onclick='tree_download_image();'>Convert to image</button> |-->
+						<button onclick='tree_download_data();'>Download tree data</button>
+						<!--<button onclick='tree_search();'>Find</button>-->
+					</div>
+					
+				</section>
+
+			</div>
+		</section>
+
+		<script type='text/javascript'>
+			let tree = null;
+			let table = null;
+
+			function build_tree()
+			{
+				// tree component
+				tree = new PilbaraTree(document.querySelector('#tree_canvas'));
+
+				// // table component
+				// table = require('./js/component_table')();
+				// get('#table_wrapper').appendChild(table.dom);
+				// table.load('/Users/julian/Desktop/Code/javascript/readslam/1kp/119_pilbara_database/data/pilbara_metadata.html');
+				// table.render();
+			}
+
+			function tree_search()
+			{
+				let userdata = prompt("Search for a string (regex supported)", "BLAH");
+			}
+			function tree_download_image()
+			{
+				let cvs = document.getElementById('tree_canvas');
+				window.open(cvs.toDataURL('image/png'));
+				// let a = document.createElement('a');
+				// a.download = 'image.png';
+				// a.href = cvs.toDataURL('image/png');
+				// a.click();
+			}
+			function tree_download_data()
+			{
+				let a = document.createElement('a');
+				a.href='./data/tree.tsv';
+				a.click();
+			}
+			build_tree();
+
+		</script>
+
+		<!-- Footer -->
+		<!--<inject src='html/footer.html'></inject>-->
+		<script src='html/footer.js'></script>
+
+	</body>
+</html>

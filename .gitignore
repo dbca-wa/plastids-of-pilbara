@@ -1,0 +1,55 @@
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local development
+*local*
+*.local
+.env.local
+
+# Node.js (if you ever add build tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Temporary folders
+tmp/
+temp/
+
+# Git
+.git/
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Security sensitive files (if any)
+.env
+secrets/
+private/
+
+# Build artifacts (if you add build process later)
+dist/
+build/
+.cache/

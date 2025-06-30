@@ -1,0 +1,105 @@
+<!DOCTYPE HTML>
+<!--
+	Ion by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+-->
+<html>
+	<head>
+		<title>Plastids of the Pilbara</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<link rel="icon" type="image/gif" href="images/favicon.gif" />
+
+		<!-- START NODE HACK -->
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+		<!--[if lte IE 8]><script src="js/html5shiv.js"></script><![endif]-->
+		<script src="js/jquery.min.js"></script>
+		<script src="js/skel.min.js"></script>
+		<script src="js/skel-layers.min.js"></script>
+		<script src="js/init.js"></script>
+
+		<!-- END NODE HACK -->
+		<script>if (window.module) module = window.module;</script>
+
+		<noscript>
+			<link rel="stylesheet" href="css/skel.css" />
+			<link rel="stylesheet" href="css/style.css" />
+			<link rel="stylesheet" href="css/style-xlarge.css" />
+		</noscript>
+
+		<script src='js/linker.js'></script>
+	</head>
+	<body id="top">
+
+		<!-- Header -->
+		<!--<inject src='html/header.html'></inject>-->
+		<script src='html/header.js'></script>
+
+		<!-- Main -->
+		<section id="main" class="wrapper style1">
+			<header class="major">
+				<h2>Sequence Search</h2>
+				<p>Submit a plastid DNA sequence to search for the most similar sequence in the database.</p>
+			</header>
+			<div class="container">
+				<div class="row">
+					<!-- Left column -->
+					<div class="4u">
+						<section>
+							<h3>Pilbara Sequences</h3>
+							<p>
+								There are currently 683 sequences in the database. To find out more about where biological
+								samples were sourced from, how samples were prepared and assembled, and how data were
+								prepared, click below:
+							</p>
+							<ul class="actions">
+								<li><a href="#" class="button alt">Learn More</a></li>
+							</ul>
+						</section>
+						<hr />
+						<section>
+							<h3>Other resources</h3>
+							<ul class="alt">
+								<li><a href="#">Link to external resource</a></li>
+								<li><a href="#">Link to external resource</a></li>
+								<li><a href="#">Link to external resource</a></li>
+								<li><a href="#">Link to external resource</a></li>
+								<li><a href="#">Link to external resource</a></li>
+							</ul>
+						</section>
+					</div>
+
+					<!-- Main column -->
+					<div class="8u skel-cell-important">
+						<section>
+							<p><textarea style='resize:vertical; min-height:200px;'></textarea></p>
+							<p style='text-align:center;'>
+								<input type='file' id='file_upload' style='display:none' onchange="handleFiles(this.files)"></input>
+								<input onclick='document.querySelector("#file_upload").click();' type='button' value='Upload File'></input>
+								&nbsp;OR&nbsp;
+								<input type='button' value='Submit Sequence'></input>
+							</p>
+							<h4>Search guidelines</h4>
+							<ul>
+								<li>only one sequence may be submitted at a time</li>
+								<li>if the first non-whitespace letter is a '&gt;' character then the sequence will be processed as a FastA formatted sequence</li>
+								<li>FastA sequences may have any number of lines for the sequence, but the header must be on a single line</li>
+								<li>search is not case sensitive (lower case letters will be treated as if they are upper case)</li>
+								<li>DNA bases that are not A|T|C|G will be treated as N</li>
+								<li>if the sequence is not FastA, all lines will be trimmed and concatenated for a single sequence</li>
+								<li>sequence size is limited to 1 million characters</li>
+							</ul>
+						</section>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Footer -->
+		<!--<inject src='html/footer.html'></inject>-->
+		<script src='html/footer.js'></script>
+	</body>
+</html>

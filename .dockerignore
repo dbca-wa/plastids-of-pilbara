@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+LICENSE
+CHANGELOG.md
+docs/
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local development files
+*local*
+*.local
+.env.local
+.env
+
+# Node.js (if present)
+node_modules/
+npm-debug.log*
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Build artifacts
+dist/
+build/
+.cache/
+
+# Security sensitive
+secrets/
+private/
+
+# CI/CD files (if you add them)
+.github/
+.gitlab-ci.yml
+azure-pipelines.yml

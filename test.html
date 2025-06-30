@@ -1,0 +1,33 @@
+<html>
+<head>
+	<script src='js/fabric.min.js'></script>
+</head>
+<body>
+	<canvas id='c' width='200' height='200' style='border:solid black 1px'></canvas>
+	<script>
+		let fab = new fabric.Canvas('c');
+		fab.on('mouse:down', e => { console.log(e) });
+		fab.on('mouse:out', e => { console.log(e) });
+		let obj = new fabric.Circle({
+			left:0,
+			top:0,
+			radius : 10,
+			fill : 'black',
+			selectable : false
+		});
+		console.log(Object.keys(fab));
+		fab.add(obj);
+		fab.renderAll();
+		obj.set({left:100,top:100});
+		obj.setCoords();
+		fab.renderAll();
+
+
+		console.log(fab);
+	</script>
+	* Sets property to a given value. When changing position/dimension -related
+	properties (left, top, scale, angle, etc.) `set` does not update position of
+	object's borders/controls. If you need to update those, call `setCoords()`.
+
+</body>
+</html>
