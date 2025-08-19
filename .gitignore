@@ -1,7 +1,4 @@
-.github/
-Dockerfile
-.dockerignore
-nginx.conf
+
 
 # IDE files
 .idea/
