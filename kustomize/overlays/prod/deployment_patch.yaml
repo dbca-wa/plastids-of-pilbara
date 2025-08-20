@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plastids-deploy
+spec:
+  template:
+    spec:
+      containers:
+        - name: plastids
+          volumeMounts:
+            - mountPath: /etc/nginx/conf.d
+              name: nginx-default-conf-prod
+              readOnly: true
+      volumes:
+        - name: nginx-default-conf-prod
+          configMap:
+            defaultMode: 420
+            name: nginx-default-conf-prod
