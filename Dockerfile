@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM nginxinc/nginx-unprivileged:1.31.0-alpine
+FROM nginxinc/nginx-unprivileged:1.31.1-alpine
 LABEL org.opencontainers.image.authors=asi@dbca.wa.gov.au
 LABEL org.opencontainers.image.source=https://github.com/dbca-wa/plastids-of-pilbara
 LABEL org.opencontainers.image.description="Plastids of the Pilbara"
