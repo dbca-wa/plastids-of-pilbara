@@ -5,7 +5,7 @@
 # bun.lock, README) can't end up in the webroot whatever .dockerignore says. The
 # site loads its libraries with plain <script> tags, so js/ and css/ are the
 # vendored files committed in the repo - there's no build or bundling step.
-FROM alpine:3.20 AS assets
+FROM alpine:3.24 AS assets
 WORKDIR /assets
 # Root HTML pages.
 COPY data_explorer.html .
