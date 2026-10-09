@@ -1,0 +1,20 @@
+{
+	"name": "plastids-of-pilbara",
+	"version": "1.0.3",
+	"private": true,
+	"license": "Apache-2.0",
+	"description": "Plastids of the Pilbara - static site served by nginx",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/dbca-wa/plastids-of-pilbara.git"
+	},
+	"scripts": {
+		"deps:sync": "bash scripts/sync-deps.sh",
+		"deps:update": "bun update && bun run deps:sync",
+		"deps:check": "bun outdated"
+	},
+	"dependencies": {
+		"fabric": "^5.3.0",
+		"jquery": "^3.7.1"
+	}
+}

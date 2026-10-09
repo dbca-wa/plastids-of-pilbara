@@ -13,3 +13,20 @@ updates:
       interval: 'weekly'
     commit-message:
       prefix: '[docker] '
+
+  # Browser libraries (jquery, fabric). Dependabot only updates package.json and
+  # bun.lock - it can't run the copy script, so the minified files under js/ won't
+  # change on their own. Before merging one of these PRs:
+  #
+  #     bun install && bun run deps:sync
+  #
+  # then commit the resulting js/jquery.min.js / js/fabric.min.js changes onto the
+  # same branch.
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    commit-message:
+      prefix: '[deps] '
+    cooldown:
+      default-days: 7
