@@ -25,7 +25,7 @@ COPY html/ ./html/
 COPY images/ ./images/
 
 # Stage 2: Production nginx image with only the web assets.
-FROM nginxinc/nginx-unprivileged:1.31.3-alpine
+FROM nginxinc/nginx-unprivileged:1.31.6-alpine
 LABEL org.opencontainers.image.authors=asi@dbca.wa.gov.au
 LABEL org.opencontainers.image.source=https://github.com/dbca-wa/plastids-of-pilbara
 LABEL org.opencontainers.image.description="Plastids of the Pilbara"
