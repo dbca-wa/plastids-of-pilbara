@@ -1,6 +1,19 @@
 .git
 .gitignore
+.github/
+.dockerignore
+.DS_Store
 Dockerfile
 LICENSE
 README.md
 .env
+kustomize/
+
+# The image bundles the committed js/ and css/ files directly - the build never
+# runs bun, so a local node_modules/ would only bloat the context.
+node_modules/
+package.json
+bun.lock
+
+# Dependency tooling isn't needed in the build context.
+scripts/
