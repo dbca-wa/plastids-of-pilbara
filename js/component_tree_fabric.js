@@ -149,14 +149,13 @@ function Tree(user_opts)
 
 	// resize the canvases
 	function resize(w,h) {
-		fab.setWidth(Math.round(w));
-		fab.setHeight(Math.round(h));
+		fab.setDimensions({ width: Math.round(w), height: Math.round(h) });
 	}
 
 	// the height of the canvas depends on the number of leaves, label size and spacing
 	function calculate_height() {
-		leaf_height = leaves[0].textbox.getHeight();
-		return leaves.length * leaves[0].textbox.getHeight();
+		leaf_height = leaves[0].textbox.height;
+		return leaves.length * leaves[0].textbox.height;
 	}
 
 	// the width of the canvas depends on the depth of the tree, the drawing mode, and the length of the labels
@@ -168,7 +167,7 @@ function Tree(user_opts)
 
 		for (let leaf of leaves) {
 			if (leaf.depth > max_depth) max_depth = leaf.depth;
-			let width = leaf.textbox.getWidth();
+			let width = leaf.textbox.width;
 			if (width > max_label_width) max_label_width = width;
 		}
 		leaf_left = max_depth * opts.branch_length;

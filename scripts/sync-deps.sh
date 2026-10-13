@@ -49,7 +49,7 @@ fi
 echo "Syncing from node_modules/"
 
 copy_file "jquery/dist/jquery.min.js" "js/jquery.min.js"
-copy_file "fabric/dist/fabric.min.js" "js/fabric.min.js"
+copy_file "fabric/dist/index.min.js" "js/fabric.min.js"  # Fabric 6 browser build is dist/index.min.js (was dist/fabric.min.js in Fabric 5)
 
 if [ "$errors" -gt 0 ]; then
 	echo "Failed: $errors source path(s) not found. Check node_modules/ and update the paths above." >&2
