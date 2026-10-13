@@ -40,7 +40,7 @@ function Table(config)
 	let state = config || {};
 	let style = `
 		<style>
-			@import "https://cdn.datatables.net/v/dt/dt-1.10.13/af-2.1.3/b-1.2.4/b-colvis-1.2.4/b-html5-1.2.4/cr-1.3.2/fc-3.2.2/fh-3.1.2/kt-2.2.0/rr-1.2.0/sc-1.4.2/se-1.2.0/datatables.min.css";
+			@import "https://cdn.datatables.net/v/dt/dt-2.3.4/af-2.7.0/b-3.2.4/b-colvis-3.2.4/b-html5-3.2.4/cr-2.1.1/fc-5.0.4/fh-4.0.3/kt-2.12.1/rr-1.5.0/sc-2.4.3/se-3.0.1/datatables.min.css";
 		</style>
 	`;
 
