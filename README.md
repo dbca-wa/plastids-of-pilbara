@@ -27,13 +27,15 @@ Two browser libraries are managed with [bun](https://bun.sh/) and committed as
 minified files in `js/`, so a clone runs without bun and version changes show up as
 diffs in review:
 
-- `js/jquery.min.js` - jQuery 3.7.1 (`jquery ^3.7.1`)
-- `js/fabric.min.js` - Fabric.js 5.x (`fabric ^5.3.0`)
+- `js/jquery.min.js` - jQuery 4.0.0 (`jquery 4.0.0`)
+- `js/fabric.min.js` - Fabric.js 6.9.1 (`fabric 6.9.1`)
 
 `scripts/sync-deps.sh` copies them out of `node_modules/` into the exact paths the
-HTML `<script src="...">` tags expect. Because the site uses plain script tags, the
-files must stay at `js/jquery.min.js` and `js/fabric.min.js` - don't move them into a
-`js/lib/` directory.
+HTML `<script src="...">` tags expect. jQuery comes from `jquery/dist/jquery.min.js`,
+and the Fabric 6 browser build is copied from `fabric/dist/index.min.js` (Fabric 5's
+was `fabric/dist/fabric.min.js`) into `js/fabric.min.js`. Because the site uses plain
+script tags, the files must stay at `js/jquery.min.js` and `js/fabric.min.js` - don't
+move them into a `js/lib/` directory.
 
 ```bash
 bun install          # first time only
@@ -47,9 +49,11 @@ Use `bun run deps:check` to see what's available, or `bun run deps:sync` to re-c
 without changing versions. If a library moves its files around, the sync exits with
 an error naming the missing path; update the paths in the script when that happens.
 
-jquery and fabric are intentionally held on their current majors (`^3.7.1` /
-`^5.3.0`). Moving to jQuery 4 or Fabric 6 is a breaking change for this site's code
-and is not done automatically.
+jquery and fabric are on their current majors, jQuery 4 and Fabric 6, pinned to exact
+versions (`4.0.0` / `6.9.1`) rather than `^` ranges. Moving across these majors was a
+breaking change for this site's code and was done deliberately; a future major bump is
+the same kind of manual, verified upgrade. Any version change still means running
+`bun install && bun run deps:sync` and committing the resulting `js/` files.
 
 Dependabot only updates `package.json` and `bun.lock` and can't run the copy script,
 so its PRs leave the files in `js/` untouched. Run `bun install && bun run deps:sync`
