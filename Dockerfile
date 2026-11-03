@@ -25,7 +25,7 @@ COPY html/ ./html/
 COPY images/ ./images/
 
 # Stage 2: Production nginx image with only the web assets.
-FROM nginxinc/nginx-unprivileged:1.31.6-alpine
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine
 # Apply Alpine security updates the upstream base image has not picked up yet
 # (e.g. brotli-libs 1.2.1-r0 for CVE-2026-111497, curl, expat, libx11). Runs as
 # root, then drops back to the image's unprivileged nginx user (101).
