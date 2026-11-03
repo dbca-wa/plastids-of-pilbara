@@ -14,7 +14,7 @@
 		"deps:check": "bun outdated"
 	},
 	"dependencies": {
-		"fabric": "6.9.1",
+		"fabric": "7",
 		"jquery": "4.0.0"
 	}
 }

@@ -37,6 +37,11 @@ window.PilbaraTree = new (function () {
 		return null;
 	}
 
+	// Fabric 7 changed the default object origin to the centre. The tree
+	// positions objects by their top-left corner, so restore that default.
+	fabric.FabricObject.ownDefaults.originX = "left";
+	fabric.FabricObject.ownDefaults.originY = "top";
+
 	// Minimal events system (optomised)
 	const EventsMixin = function (target) {
 		if (target) return EventsMixin.call(target);

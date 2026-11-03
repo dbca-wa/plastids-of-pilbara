@@ -5,6 +5,9 @@
 <body>
 	<canvas id='c' width='200' height='200' style='border:solid black 1px'></canvas>
 	<script>
+		// Fabric 7 defaults to a centre origin; keep top-left positioning.
+		fabric.FabricObject.ownDefaults.originX = 'left';
+		fabric.FabricObject.ownDefaults.originY = 'top';
 		let fab = new fabric.Canvas('c');
 		fab.on('mouse:down', e => { console.log(e) });
 		fab.on('mouse:out', e => { console.log(e) });
