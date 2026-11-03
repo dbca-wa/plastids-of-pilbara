@@ -15,6 +15,12 @@ spec:
       labels:
         app: plastids
     spec:
+      # Required by the Pod Security "restricted" profile. Applies to all
+      # containers; the container securityContext below covers the profile's
+      # other requirements (non-root, no privilege escalation, no capabilities).
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: plastids
           image: ghcr.io/dbca-wa/plastids-of-pilbara
@@ -49,6 +55,8 @@ spec:
             timeoutSeconds: 1
           securityContext:
             runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
             privileged: false
             allowPrivilegeEscalation: false
             capabilities:
